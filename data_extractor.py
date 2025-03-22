@@ -21,7 +21,7 @@ bucket_list = [
 def get_amazon_price(dom):
 
     try:
-        price = dom.xpath('//span[@class="a-offscreen"]/text()')[0]
+        price = dom.xpath('//*[@id="corePriceDisplay_desktop_feature_div"]/div[1]/span[3]/span[2]/text()')[0]
         price = price.replace(',', '').replace('£', '').replace('.00', '')
         return int(price)
     except Exception as e:
@@ -37,3 +37,22 @@ def get_product_name(dom):
     except Exception as e:
         name = 'Not Available'
         return None
+    
+# write data into a csv file
+
+with open('master_data.csv', 'a') as csv_file:
+    writer = csv.writer(csv_file)
+    writer.writerow(['product name', 'price', 'url'])
+
+    for url in bucket_list:
+        response = requests.get(url, headers=header)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        amazon_dom = et.HTML(str(soup))
+
+        product_name = get_product_name(amazon_dom)
+        product_price = get_amazon_price(amazon_dom)
+
+        time.sleep(random.randint(2, 10))
+
+        writer.writerow([product_name, product_price, url])
+        print(product_name, product_price, url)

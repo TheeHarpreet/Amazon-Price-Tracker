@@ -18,3 +18,81 @@ amazon_urls = [
     "https://www.amazon.co.uk/dp/B08PVDZQMD?ref=nb_sb_ss_w_as-reorder_k0_1_11&amp=&crid=2046HRR1JXZXM&sprefix=moisturiser&th=1"
 ]
 
+def get_amazon_price(dom):
+
+    try:
+        
+        price = dom.xpath('//*[@id="corePriceDisplay_desktop_feature_div"]/div[1]/span[3]/span[2]/span[2]')[0]
+        price = price.replace(',', '').replace('£', '').replace('.00', '')
+        return int(price)
+    except Exception as e:
+        price = 'Not Available'
+        return None
+
+def get_product_name(dom):
+    try:
+        name = dom.xpath('//span[@id="productTitle"]/text()')
+        [name.strip() for name in name]
+        return name[0]
+    except Exception as e:
+        name = 'Not Available'
+        return None
+
+def get_master_price(url):
+    for row in df.itertuples():
+        if row.url == url:
+            return row.price
+    return None
+
+#lists for storing products with a price drop (name and url)
+price_drop_products = [] 
+price_drop_list_url =[]
+
+#going through each page, get current price and compare it against the file in data extracter file
+#and see if there is a change in price of more than 10%. if true, it gets added to the lists
+for product_url in amazon_urls:
+
+    response = requests.get(product_url, headers=header)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    main_dom = et.HTML(str(soup))
+
+    price = get_amazon_price(main_dom)
+    product_name = get_product_name(main_dom)
+    df = pd.read_csv('master_Data.csv', encoding='cp1252')
+
+    master_price = get_master_price(product_url)
+    if master_price is not None and price is not None and price < master_price:
+        change_percentage = round((get_master_price(product_url) - price) * 100 / get_master_price(product_url))
+
+        if change_percentage > 10:
+            print(' There is a {}'.format(change_percentage), '% drop in price for {}'.format(product_name))
+            print('Click here to purchase {}'.format(product_url))
+            price_drop_products.append(product_name)
+            price_drop_list_url.append(product_url)
+
+print(f"Checking product: {product_name}, Current Price: {price}, Master Price: {master_price}")
+
+print(f"Scraped price for {product_name}: {price}")
+
+
+#if no price chnge, exit the program
+if len(price_drop_products) == 0:
+    sys.exit('No Price drop found')
+
+#if there is a change, using Twilio API and send a message.
+messege = "There is a drop in price for " \
+"{}".format(len(price_drop_products)) + " products." + "Click to purchase"
+
+for items in price_drop_list_url:
+    messege = messege + "\n" + items
+
+account_sid = 'AC0ac06ae7f70e2befce41c52756a784ba'
+auth_token = 'df0ea33ba7be8bbcf2ba143ba7de7e5d'
+
+client = Client(account_sid, auth_token)
+message = client.messages.create(
+    from_='07947644437',
+    body=messege,
+    to='07947644437'
+)
+sys.exit('Price drop found')
