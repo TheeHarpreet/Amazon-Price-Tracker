@@ -86,8 +86,8 @@ messege = "There is a drop in price for " \
 for items in price_drop_list_url:
     messege = messege + "\n" + items
 
-account_sid = 'AC0ac06ae7f70e2befce41c52756a784ba'
-auth_token = 'df0ea33ba7be8bbcf2ba143ba7de7e5d'
+account_sid = 'Add your account sid'
+auth_token = 'Add your auth token'
 
 client = Client(account_sid, auth_token)
 message = client.messages.create(
