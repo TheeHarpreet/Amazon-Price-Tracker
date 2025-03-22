@@ -91,8 +91,8 @@ auth_token = 'Add your auth token'
 
 client = Client(account_sid, auth_token)
 message = client.messages.create(
-    from_='07947644437',
+    from_='Add your twilio phone number',
     body=messege,
-    to='07947644437'
+    to='Add your personal phone number'
 )
 sys.exit('Price drop found')
